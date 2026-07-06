@@ -2,7 +2,7 @@ package com.intern.lostandfound.dto;
 
 import java.time.LocalDate;
 
-import com.intern.lostandfound.entity.ItemStatus;
+import com.intern.lostandfound.model.ItemStatus;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

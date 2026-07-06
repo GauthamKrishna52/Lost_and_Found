@@ -3,7 +3,7 @@ package com.intern.lostandfound.service;
 import org.springframework.stereotype.Service;
 
 import com.intern.lostandfound.dto.ItemRequest;
-import com.intern.lostandfound.entity.Item;
+import com.intern.lostandfound.model.Item;
 import com.intern.lostandfound.repo.ItemRepo;
 
 @Service

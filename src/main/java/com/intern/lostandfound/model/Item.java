@@ -1,4 +1,4 @@
-package com.intern.lostandfound.entity;
+package com.intern.lostandfound.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
