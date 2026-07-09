@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.intern.lostandfound.model.User;
 import com.intern.lostandfound.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.intern.lostandfound.dto.LoginRequest;
 
 @RestController
 public class UserController {
@@ -16,6 +17,12 @@ public class UserController {
     @PostMapping("/register")
     public User registerUser(@RequestBody User user) {
         return userService.registerUser(user);
+    }
+
+    @PostMapping("/login")
+    public boolean loginUser(@RequestBody LoginRequest user) {
+
+        return userService.loginUser(user);
     }
 
 }
