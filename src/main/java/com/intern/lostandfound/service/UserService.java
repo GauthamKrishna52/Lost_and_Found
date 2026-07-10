@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
 import com.intern.lostandfound.model.User;
 import org.springframework.stereotype.Service;
 import com.intern.lostandfound.repo.Userrepo;
@@ -13,6 +12,9 @@ import com.intern.lostandfound.dto.LoginRequest;
 
 @Service
 public class UserService {
+
+    @Autowired
+    private JwtService jwtService;
 
     @Autowired
     private Userrepo userRepo;
@@ -27,15 +29,18 @@ public class UserService {
        return userRepo.save(user);
     }
 
-    public boolean loginUser(LoginRequest user) {
+    public String loginUser(LoginRequest user) {
         
         Authentication authentication = authManager.authenticate(new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword()));
 
-        if (authentication.isAuthenticated()) {
-            return true;
-        } else {
-            return false;
-        }
+        if(authentication.isAuthenticated())
+        return jwtService.generateToken(user.getEmail());
+        else
+        return "Invalid user credentials";
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepo.findByEmail(email);
     }
 
 }
