@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost & Found - Authentication</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 Framework -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Custom smooth transition for fading between views */
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        /* Remove default browser autofill background styles */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active{
+            -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+            -webkit-text-fill-color: white !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen w-full font-sans text-white">
+
+    <!-- Vue App Mount Point -->
+    <div id="app" class="min-h-screen w-full relative overflow-hidden flex items-center justify-center">
+        
+        <!-- Beautiful Background Image -->
+        <div class="absolute inset-0 z-0">
+            <img src="https://imgs.search.brave.com/v7D3M03G0bfHLaLzlWWMAkOqtj9G5s3-IUyHtwkgG50/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90aHVt/YnMuZHJlYW1zdGlt/ZS5jb20vYi9kZXRl/Y3RpdmUtc29sdmlu/Zy1teXN0ZXJ5LW1h/Z25pZnlpbmctZ2xh/c3MtbG9uZG9uLXZl/Y3Rvci1kZXNpZ24t/Z2VuZXJhdGl2ZS1h/aS1jaGFybWluZy1p/bGx1c3RyYXRpb24t/Y2xhc3NpYy1lbmdy/b3NzZWQtNDEyMTky/MDA0LmpwZw" class="w-full h-full object-cover object-center" alt="Beautiful landscape">
+            <!-- Gradient Overlay to ensure text readability -->
+            <div class="absolute inset-0 bg-gradient-to-br from-black/40 to-transparent"></div>
+        </div>
+
+        <!-- Glassmorphism Container -->
+        <div class="relative z-10 w-full max-w-md mx-4 p-8 sm:p-10 rounded-[2rem] bg-white/10 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]">
+            
+            <!-- Dynamic Status Message -->
+            <div v-if="message" :class="message.type === 'error' ? 'bg-red-500/20 border-red-500/50' : 'bg-green-500/20 border-green-500/50'" class="p-3 rounded-xl mb-6 text-sm text-center font-medium border backdrop-blur-sm transition-all">
+                {{ message.text }}
+            </div>
+
+            <!-- LOGIN VIEW -->
+            <transition name="fade" mode="out-in">
+                <div v-if="currentView === 'login'" key="login">
+                    <h2 class="text-3xl font-bold mb-8 text-center tracking-wide text-white">Login</h2>
+                    
+                    <form @submit.prevent="handleLogin" class="space-y-6">
+                        <!-- Email Field -->
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center text-white/70">
+                                <i class="fa-regular fa-user"></i>
+                            </span>
+                            <input v-model="loginForm.email" type="email" required class="w-full bg-transparent border-b border-white/50 py-2 pl-8 pr-4 text-white placeholder-white/70 focus:outline-none focus:border-white focus:border-b-2 transition-all" placeholder="Email">
+                        </div>
+
+                        <!-- Password Field -->
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center text-white/70">
+                                <i class="fa-solid fa-lock"></i>
+                            </span>
+                            <input v-model="loginForm.password" :type="showPassword ? 'text' : 'password'" required class="w-full bg-transparent border-b border-white/50 py-2 pl-8 pr-10 text-white placeholder-white/70 focus:outline-none focus:border-white focus:border-b-2 transition-all" placeholder="Password">
+                            <!-- Toggle Password Visibility -->
+                            <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 flex items-center text-white/70 hover:text-white transition-colors">
+                                <i class="fa-regular" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                            </button>
+                        </div>
+
+                        <!-- Remember Me & Forgot Password row -->
+                        <div class="flex items-center justify-between text-xs sm:text-sm text-white/90">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" class="mr-2 accent-white w-4 h-4 rounded border-white/50 bg-white/10 cursor-pointer">
+                                Remember me
+                            </label>
+                            <a href="#" class="hover:text-white hover:underline transition-all">Forgot Password?</a>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" :disabled="loading" class="w-full bg-white text-gray-900 font-bold py-3 rounded-xl hover:bg-gray-100 transition duration-300 shadow-lg disabled:opacity-70 mt-6 flex items-center justify-center">
+                            <span v-if="loading"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Logging in...</span>
+                            <span v-else>Login</span>
+                        </button>
+                    </form>
+
+                    <div class="mt-8 text-center text-sm text-white/80">
+                        Don't have an account? 
+                        <a href="#" @click.prevent="switchView('register')" class="text-white font-bold hover:underline transition ml-1">Register</a>
+                    </div>
+                </div>
+
+                <!-- REGISTER VIEW -->
+                <div v-else-if="currentView === 'register'" key="register">
+                    <h2 class="text-3xl font-bold mb-6 text-center tracking-wide text-white">Register</h2>
+                    
+                    <form @submit.prevent="handleRegister" class="space-y-5">
+                        <!-- Name Field -->
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center text-white/70">
+                                <i class="fa-regular fa-user"></i>
+                            </span>
+                            <input v-model="registerForm.name" type="text" required class="w-full bg-transparent border-b border-white/50 py-2 pl-8 pr-4 text-white placeholder-white/70 focus:outline-none focus:border-white focus:border-b-2 transition-all" placeholder="Full Name">
+                        </div>
+
+                        <!-- Email Field -->
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center text-white/70">
+                                <i class="fa-regular fa-envelope"></i>
+                            </span>
+                            <input v-model="registerForm.email" type="email" required class="w-full bg-transparent border-b border-white/50 py-2 pl-8 pr-4 text-white placeholder-white/70 focus:outline-none focus:border-white focus:border-b-2 transition-all" placeholder="Email Address">
+                        </div>
+
+                        <!-- Phone Number Field -->
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center text-white/70">
+                                <i class="fa-solid fa-phone"></i>
+                            </span>
+                            <input v-model="registerForm.phone" type="tel" required class="w-full bg-transparent border-b border-white/50 py-2 pl-8 pr-4 text-white placeholder-white/70 focus:outline-none focus:border-white focus:border-b-2 transition-all" placeholder="Phone Number">
+                        </div>
+
+                        <!-- Password Field -->
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center text-white/70">
+                                <i class="fa-solid fa-lock"></i>
+                            </span>
+                            <input v-model="registerForm.password" :type="showPassword ? 'text' : 'password'" required class="w-full bg-transparent border-b border-white/50 py-2 pl-8 pr-10 text-white placeholder-white/70 focus:outline-none focus:border-white focus:border-b-2 transition-all" placeholder="Password">
+                            <!-- Toggle Password Visibility -->
+                            <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 flex items-center text-white/70 hover:text-white transition-colors">
+                                <i class="fa-regular" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                            </button>
+                        </div>
+
+                        <button type="submit" :disabled="loading" class="w-full bg-white text-gray-900 font-bold py-3 rounded-xl hover:bg-gray-100 transition duration-300 shadow-lg disabled:opacity-70 mt-6 flex items-center justify-center">
+                            <span v-if="loading"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Registering...</span>
+                            <span v-else>Register</span>
+                        </button>
+                    </form>
+
+                    <div class="mt-6 text-center text-sm text-white/80">
+                        Already have an account? 
+                        <a href="#" @click.prevent="switchView('login')" class="text-white font-bold hover:underline transition ml-1">Login</a>
+                    </div>
+                </div>
+            </transition>
+        </div>
+    </div>
+
+    <!-- Vue.js Application Logic -->
+    <script>
+        const { createApp, ref, reactive } = Vue;
+
+        createApp({
+            setup() {
+                // State to manage which view to show ('login' or 'register')
+                const currentView = ref('login');
+                
+                // Loading state for buttons
+                const loading = ref(false);
+                
+                // State for success/error messages
+                const message = ref(null);
+
+                // UI State for toggling password visibility
+                const showPassword = ref(false);
+
+                // Form Data Objects
+                const loginForm = reactive({
+                    email: '',
+                    password: ''
+                });
+
+                const registerForm = reactive({
+                    name: '',
+                    email: '',
+                    phone: '',
+                    password: ''
+                });
+
+                // Function to switch between login and register views
+                const switchView = (view) => {
+                    currentView.value = view;
+                    message.value = null; // Clear any old messages when switching
+                    showPassword.value = false; // Reset password visibility
+                };
+
+                // Function handling Login Submission
+                const handleLogin = async () => {
+                    loading.value = true;
+                    message.value = null;
+
+                    try {
+                         // ==========================================
+                        // BACKEND INTEGRATION CODE (Uncomment later)
+                        // ==========================================
+                        // Replace '/api/login' with your backend URL
+                        
+                        const response = await fetch('/api/auth/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(loginForm)
+                        });
+                        
+                        const data = await response.text();
+                        
+                        if (!response.ok) throw new Error(data.message || 'Login failed');
+                        
+                        // Handle success (e.g., save token, redirect to dashboard)
+                        localStorage.setItem('token', data.token);
+                        window.location.href = '/dashboard.html';
+                        
+
+                        // SIMULATED API CALL
+                        //await new Promise(resolve => setTimeout(resolve, 1500));
+                        //console.log('Login Payload:', loginForm);
+                        message.value = { type: 'success', text: 'Welcome back! Login successful.' };
+                        
+                    } catch (error) {
+                        message.value = { type: 'error', text: error.message };
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                // Function handling Register Submission
+                const handleRegister = async () => {
+                    loading.value = true;
+                    message.value = null;
+
+                    try {
+                        
+                        // ==========================================
+                        // BACKEND INTEGRATION CODE (Uncomment later)
+                        // ==========================================
+                        // Replace '/api/register' with your backend URL
+                        
+                        const response = await fetch('/api/auth/register', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(registerForm)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (!response.ok) throw new Error(data.message || 'Registration failed');
+                        
+
+                        // SIMULATED API CALL
+                        //await new Promise(resolve => setTimeout(resolve, 1500));
+                        //console.log('Register Payload:', registerForm);
+                        //message.value = { type: 'success', text: 'Account created! Redirecting to login...' };
+                        
+                        // Automatically switch back to login after successful registration
+                        setTimeout(() => {
+                            switchView('login');
+                            registerForm.name = '';
+                            registerForm.email = '';
+                            registerForm.phone = '';
+                            registerForm.password = '';
+                        }, 2500);
+
+                    } catch (error) {
+                        message.value = { type: 'error', text: error.message };
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                return {
+                    currentView,
+                    loginForm,
+                    registerForm,
+                    loading,
+                    message,
+                    showPassword,
+                    switchView,
+                    handleLogin,
+                    handleRegister
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

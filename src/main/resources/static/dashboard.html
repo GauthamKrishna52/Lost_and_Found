@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Smooth fade transition for the modal */
+        .modal-enter-active, .modal-leave-active { transition: all 0.3s ease; }
+        .modal-enter-from, .modal-leave-to { opacity: 0; transform: scale(0.95); }
+    </style>
+</head>
+<body class="text-gray-800 antialiased h-screen overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+
+    <div id="app" class="flex h-screen w-full">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="w-72 bg-white/80 backdrop-blur-xl border-r border-gray-100 shadow-2xl flex flex-col hidden md:flex z-20">
+            <div class="p-8 flex items-center gap-3 text-indigo-600 border-b border-gray-100/50">
+                <div class="bg-indigo-100 p-2 rounded-xl">
+                    <i class="fa-solid fa-magnifying-glass-location text-2xl"></i>
+                </div>
+                <span class="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Lost & Found</span>
+            </div>
+            
+            <nav class="flex-1 p-6 space-y-3 overflow-y-auto">
+                <a href="#" @click.prevent="currentView = 'dashboard'" :class="currentView === 'dashboard' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-gray-500 hover:bg-indigo-50 hover:text-indigo-600'" class="flex items-center gap-4 px-5 py-3.5 rounded-2xl font-medium transition-all group">
+                    <i class="fa-solid fa-border-all w-5 text-lg" :class="currentView === 'dashboard' ? '' : 'group-hover:scale-110 transition-transform'"></i> Dashboard
+                </a>
+                <a href="#" @click.prevent="showReportModal = true" class="flex items-center gap-4 px-5 py-3.5 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 rounded-2xl font-medium transition-all group">
+                    <i class="fa-solid fa-circle-plus w-5 text-lg group-hover:scale-110 transition-transform"></i> Report Item
+                </a>
+                <a href="#" @click.prevent="currentView = 'my-reports'" :class="currentView === 'my-reports' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-gray-500 hover:bg-indigo-50 hover:text-indigo-600'" class="flex items-center gap-4 px-5 py-3.5 rounded-2xl font-medium transition-all group">
+                    <i class="fa-solid fa-box-archive w-5 text-lg" :class="currentView === 'my-reports' ? '' : 'group-hover:scale-110 transition-transform'"></i> My Reports
+                </a>
+                <a href="#" @click.prevent="currentView = 'profile'" :class="currentView === 'profile' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-gray-500 hover:bg-indigo-50 hover:text-indigo-600'" class="flex items-center gap-4 px-5 py-3.5 rounded-2xl font-medium transition-all group">
+                    <i class="fa-regular fa-user w-5 text-lg" :class="currentView === 'profile' ? '' : 'group-hover:scale-110 transition-transform'"></i> Profile
+                </a>
+            </nav>
+
+            <div class="p-6 border-t border-gray-100/50">
+                <button @click="logout" class="flex items-center gap-4 px-5 py-3.5 w-full text-left text-rose-500 hover:bg-rose-50 rounded-2xl font-medium transition-all group">
+                    <i class="fa-solid fa-arrow-right-from-bracket w-5 text-lg group-hover:-translate-x-1 transition-transform"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            
+            <!-- Mobile Header -->
+            <div class="md:hidden bg-white/90 backdrop-blur-md shadow-sm p-4 flex justify-between items-center z-20">
+                <div class="flex items-center gap-2 text-indigo-600">
+                    <i class="fa-solid fa-magnifying-glass-location text-2xl"></i>
+                    <span class="text-lg font-bold">Lost & Found</span>
+                </div>
+                <button @click="logout" class="text-rose-500 p-2 bg-rose-50 rounded-lg"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+            </div>
+
+            <!-- Top Header & Search -->
+            <header class="p-8 lg:px-12 flex flex-col sm:flex-row justify-between items-center gap-6 z-10">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">
+                        {{ currentView === 'dashboard' ? 'Recent Items' : currentView === 'profile' ? 'My Profile' : 'My Reports' }}
+                    </h1>
+                    <p class="text-gray-500 mt-1">
+                        {{ currentView === 'dashboard' ? 'Help the community by reporting what you find.' : currentView === 'profile' ? 'Manage your personal information and account settings.' : 'Manage and view the items you have reported.' }}
+                    </p>
+                </div>
+                
+                <div v-if="currentView !== 'profile'" class="relative w-full sm:w-[400px]">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
+                        <i class="fa-solid fa-search"></i>
+                    </span>
+                    <input v-model="searchQuery" type="text" placeholder="Search keys, wallets, pets..." class="w-full bg-white shadow-sm pl-12 pr-4 py-3.5 rounded-2xl border-none focus:ring-4 focus:ring-indigo-100 transition-all text-gray-700 outline-none">
+                </div>
+            </header>
+
+            <!-- Content Container -->
+            <div class="flex-1 overflow-y-auto px-8 pb-12 lg:px-12">
+                
+                <!-- Filters -->
+                <div v-if="currentView !== 'profile'" class="flex gap-2 mb-8 bg-white/60 p-1.5 rounded-2xl inline-flex shadow-sm backdrop-blur-sm border border-gray-100">
+                    <button @click="activeFilter = 'all'" :class="activeFilter === 'all' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'" class="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300">All Items</button>
+                    <button @click="activeFilter = 'lost'" :class="activeFilter === 'lost' ? 'bg-rose-500 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'" class="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300">Lost</button>
+                    <button @click="activeFilter = 'found'" :class="activeFilter === 'found' ? 'bg-emerald-500 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'" class="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300">Found</button>
+                </div>
+
+                <div v-if="currentView !== 'profile'">
+                    <!-- Items Grid -->
+                    <div v-if="filteredItems.length > 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                        
+                        <!-- Item Card -->
+                    <!-- Empty State -->
+                    <div v-else class="text-center py-32 bg-white/50 backdrop-blur-sm rounded-[3rem] border border-dashed border-gray-300">
+                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fa-solid fa-ghost text-4xl text-gray-400"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-700">Nothing found</h3>
+                        <p class="text-gray-500 mt-2">Try tweaking your search or changing the filter.</p>
+                    </div>
+                </div>
+
+                <!-- Profile View -->
+                <div v-else class="max-w-4xl mx-auto flex flex-col md:flex-row gap-8">
+                    <!-- Left: Avatar & Stats -->
+                    <div class="w-full md:w-1/3 space-y-6">
+                        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 text-center flex flex-col items-center">
+                            <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-indigo-100 to-purple-50 p-2 mb-4 relative group cursor-pointer">
+                                <!-- Automatically generates an avatar based on the user's name -->
+                                <img :src="'https://ui-avatars.com/api/?name=' + userProfile.name.replace(' ', '+') + '&background=c7d2fe&color=3730a3&size=128'" alt="Profile" class="w-full h-full rounded-full object-cover shadow-sm">
+                                <div class="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white backdrop-blur-sm">
+                                    <i class="fa-solid fa-camera text-xl"></i>
+                                </div>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">{{ userProfile.name }}</h2>
+                            <p class="text-gray-500 text-sm mt-1 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-circle-check text-emerald-500"></i> Verified User
+                            </p>
+                            
+                            <div class="w-full mt-8 grid grid-cols-2 gap-4">
+                                <div class="bg-indigo-50/50 rounded-2xl p-4 text-center border border-indigo-100/50">
+                                    <span class="block text-3xl font-bold text-indigo-600">{{ myReportCount }}</span>
+                                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1 block">Reports</span>
+                                </div>
+                                <div class="bg-emerald-50/50 rounded-2xl p-4 text-center border border-emerald-100/50">
+                                    <span class="block text-3xl font-bold text-emerald-500">2</span>
+                                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1 block">Resolved</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Profile Form -->
+                    <div class="w-full md:w-2/3 bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
+                        <h3 class="text-xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+                            <div class="bg-indigo-100 p-2 rounded-xl text-indigo-600">
+                                <i class="fa-solid fa-user-pen text-lg"></i>
+                            </div>
+                            Account Details
+                        </h3>
+                        
+                        <form @submit.prevent="updateProfile" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                                    <input v-model="userProfile.name" type="text" required class="w-full px-5 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:bg-white outline-none transition-all text-gray-700">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
+                                    <input v-model="userProfile.phone" type="tel" required class="w-full px-5 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:bg-white outline-none transition-all text-gray-700">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                                <div class="relative">
+                                    <input v-model="userProfile.email" type="email" readonly class="w-full px-5 py-3.5 bg-gray-100 border border-gray-200 rounded-2xl outline-none text-gray-500 cursor-not-allowed">
+                                    <i class="fa-solid fa-lock absolute right-5 top-4 text-gray-400"></i>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-2"><i class="fa-solid fa-circle-info mr-1"></i> Email address is used for login and cannot be changed.</p>
+                            </div>
+
+                            <div class="border-t border-gray-100 pt-6 mt-8">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">New Password <span class="text-xs font-normal text-gray-400">(leave blank to keep current)</span></label>
+                                <input v-model="userProfile.newPassword" type="password" placeholder="••••••••" class="w-full px-5 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:bg-white outline-none transition-all text-gray-700">
+                            </div>
+
+                            <div class="flex items-center justify-between pt-6">
+                                <span v-if="profileMessage" class="text-sm font-medium text-emerald-600 flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-lg animate-pulse">
+                                    <i class="fa-solid fa-circle-check"></i> {{ profileMessage }}
+                                </span>
+                                <span v-else></span>
+                                
+                                <button type="submit" class="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-md shadow-indigo-200 flex items-center gap-2 hover:-translate-y-0.5">
+                                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- Report Item Modal -->
+            <transition name="modal">
+                <div v-if="showReportModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+                    <!-- Glass Backdrop -->
+                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="closeModal"></div>
+                    
+                    <!-- Modal Content -->
+                    <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden relative z-10 border border-white/20">
+                        
+                        <div class="p-6 sm:p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                                <div class="bg-indigo-100 p-2 rounded-xl text-indigo-600">
+                                    <i class="fa-solid fa-bullhorn text-xl"></i>
+                                </div>
+                                Report an Item
+                            </h2>
+                            <button @click="closeModal" class="text-gray-400 hover:text-rose-500 transition-colors w-10 h-10 flex items-center justify-center rounded-full hover:bg-rose-50 bg-white shadow-sm border border-gray-100">
+                                <i class="fa-solid fa-xmark text-xl"></i>
+                            </button>
+                        </div>
+
+                        <div class="p-6 sm:p-8 overflow-y-auto flex-1 custom-scrollbar">
+                            <form @submit.prevent="submitReport" class="space-y-6" id="reportForm">
+                                
+                                <!-- Toggle -->
+                                <div class="flex gap-4 p-1.5 bg-gray-100 rounded-2xl">
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" v-model="reportForm.status" value="lost" class="peer sr-only">
+                                        <div class="p-3 text-center rounded-xl peer-checked:bg-white peer-checked:text-rose-600 peer-checked:shadow-sm text-gray-500 transition-all font-bold">
+                                            <i class="fa-solid fa-search mr-2"></i> I Lost Something
+                                        </div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" v-model="reportForm.status" value="found" class="peer sr-only">
+                                        <div class="p-3 text-center rounded-xl peer-checked:bg-white peer-checked:text-emerald-600 peer-checked:shadow-sm text-gray-500 transition-all font-bold">
+                                            <i class="fa-solid fa-hand-holding-hand mr-2"></i> I Found Something
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Item Name <span class="text-rose-500">*</span></label>
+                                    <input v-model="reportForm.name" type="text" required placeholder="e.g., iPhone 13 Pro, Golden Retriever" class="w-full px-5 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all text-gray-700">
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Category <span class="text-rose-500">*</span></label>
+                                        <select v-model="reportForm.category" required class="w-full px-5 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all text-gray-700 appearance-none">
+                                            <option value="" disabled>Select a category</option>
+                                            <option value="Electronics">Electronics</option>
+                                            <option value="Pets">Pets</option>
+                                            <option value="Wallets/Bags">Wallets & Bags</option>
+                                            <option value="Keys">Keys</option>
+                                            <option value="Documents">Documents</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Date {{ reportForm.status === 'lost' ? 'Lost' : 'Found' }} <span class="text-rose-500">*</span></label>
+                                        <input v-model="reportForm.date" type="date" required class="w-full px-5 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all text-gray-700">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Location <span class="text-rose-500">*</span></label>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"><i class="fa-solid fa-location-dot"></i></span>
+                                        <input v-model="reportForm.location" type="text" required placeholder="Where was it seen last?" class="w-full pl-11 pr-5 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all text-gray-700">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Description <span class="text-gray-400 text-xs font-normal">(Optional)</span></label>
+                                    <textarea v-model="reportForm.description" rows="3" placeholder="Provide any unique details, colors, or features..." class="w-full px-5 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all text-gray-700 resize-none"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Upload Image <span class="text-gray-400 text-xs font-normal">(PNG only, Optional)</span></label>
+                                    <div class="flex items-center justify-center w-full">
+                                        <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-2xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-2"></i>
+                                                <p class="text-sm text-gray-500"><span class="font-semibold text-indigo-600">Click to upload</span> or drag and drop</p>
+                                            </div>
+                                            <input type="file" accept="image/png" @change="handleImageUpload" class="hidden" />
+                                        </label>
+                                    </div>
+                                    <p v-if="reportForm.imageFile" class="text-emerald-600 text-sm mt-2 font-medium flex items-center gap-2"><i class="fa-solid fa-check-circle"></i> {{ reportForm.imageFile.name }} attached.</p>
+                                    <p v-if="imageError" class="text-rose-500 text-sm mt-2 font-medium flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i> {{ imageError }}</p>
+                                </div>
+
+                            </form>
+                        </div>
+
+                        <div class="p-6 border-t border-gray-100 bg-gray-50/80 flex justify-end gap-4">
+                            <button @click="closeModal" type="button" class="px-6 py-3 rounded-xl font-semibold text-gray-600 hover:bg-gray-200 transition-colors">Cancel</button>
+                            <button form="reportForm" type="submit" :disabled="isSubmitting" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-md shadow-indigo-200 disabled:opacity-70 flex items-center gap-2 hover:-translate-y-0.5">
+                                <i v-if="isSubmitting" class="fa-solid fa-spinner fa-spin"></i>
+                                {{ isSubmitting ? 'Submitting...' : 'Submit Report' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+        </main>
+    </div>
+
+    <script>
+        const { createApp, ref, reactive, computed } = Vue;
+
+        createApp({
+            setup() {
+                const currentView = ref('dashboard');
+                const searchQuery = ref('');
+                const activeFilter = ref('all'); 
+                
+                // MOCK USER PROFILE DATA (To be fetched from Spring Boot)
+                const userProfile = reactive({
+                    name: 'Alex Developer',
+                    email: 'alex@example.com',
+                    phone: '+1 (555) 123-4567',
+                    newPassword: ''
+                });
+
+                // MOCK DATA (Updated to include isMine ownership)
+                const items = ref([
+                    { id: 1, title: 'Golden Retriever', category: 'Pets', status: 'lost', location: 'Central Park', date: '2026-07-01', description: 'Friendly dog, wearing a red collar. Answers to Max.', image: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=600', isMine: false },
+                    { id: 2, title: 'iPhone 13 Pro', category: 'Electronics', status: 'found', location: 'Downtown Train Station', date: '2026-07-08', description: 'Black case, cracked screen protector. Handed to station security.', image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&q=80&w=600', isMine: true },
+                    { id: 3, title: 'Car Keys (Honda)', category: 'Keys', status: 'found', location: 'Main Street Coffee Shop', date: '2026-07-10', description: 'Found a set of keys with a Honda logo and a small gym tag attached.', image: 'https://images.unsplash.com/photo-1559631665-68393e157c4c?auto=format&fit=crop&q=80&w=600', isMine: true },
+                    { id: 4, title: 'Blue Backpack', category: 'Wallets/Bags', status: 'lost', location: 'Bus Route 42', date: '2026-07-05', description: 'Jansport backpack left on the bus. Has my laptop and notes inside.', image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=600', isMine: false },
+                ]);
+                
+                // Modal State
+                const showReportModal = ref(false);
+                const isSubmitting = ref(false);
+                const imageError = ref('');
+                
+                const reportForm = reactive({
+                    name: '',
+                    category: '',
+                    location: '',
+                    date: new Date().toISOString().split('T')[0],
+                    description: '',
+                    status: 'lost',
+                    imageFile: null
+                });
+
+                const handleImageUpload = (event) => {
+                    const file = event.target.files[0];
+                    imageError.value = ''; 
+                    
+                    if (file) {
+                        if (file.type !== 'image/png') {
+                            imageError.value = 'Invalid file type. Please upload a .PNG image only.';
+                            event.target.value = ''; 
+                            reportForm.imageFile = null;
+                            return;
+                        }
+                        reportForm.imageFile = file;
+                    } else {
+                        reportForm.imageFile = null;
+                    }
+                };
+
+                const closeModal = () => {
+                    showReportModal.value = false;
+                    imageError.value = '';
+                    reportForm.name = '';
+                    reportForm.category = '';
+                    reportForm.location = '';
+                    reportForm.description = '';
+                    reportForm.imageFile = null;
+                    reportForm.status = 'lost';
+                    reportForm.date = new Date().toISOString().split('T')[0];
+                };
+
+                const submitReport = async () => {
+                    isSubmitting.value = true;
+
+                    try {
+                        /* 
+                        // ==========================================
+                        // BACKEND INTEGRATION: Multipart Form Data
+                        // ==========================================
+                        const formData = new FormData();
+                        formData.append('name', reportForm.name);
+                        formData.append('category', reportForm.category);
+                        formData.append('location', reportForm.location);
+                        formData.append('date', reportForm.date);
+                        formData.append('description', reportForm.description);
+                        formData.append('status', reportForm.status);
+                        
+                        if (reportForm.imageFile) {
+                            formData.append('image', reportForm.imageFile);
+                        }
+
+                        const token = localStorage.getItem('token');
+                        const response = await fetch('/api/items/report', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: formData
+                        });
+
+                        if (!response.ok) throw new Error('Failed to report item');
+                        */
+
+                        // Simulating a delay for UX
+                        await new Promise(resolve => setTimeout(resolve, 800)); 
+                        
+                        // Add new item to dashboard
+                        const newItem = {
+                            id: Date.now(),
+                            title: reportForm.name,
+                            category: reportForm.category,
+                            status: reportForm.status,
+                            location: reportForm.location,
+                            date: reportForm.date,
+                            description: reportForm.description || 'No description provided.',
+                            image: reportForm.imageFile ? URL.createObjectURL(reportForm.imageFile) : 'https://images.unsplash.com/photo-1610486243851-536eb8b97d19?auto=format&fit=crop&q=80&w=600',
+                            isMine: true // Any newly created item is automatically yours
+                        };
+                        
+                        items.value.unshift(newItem); 
+                        closeModal();
+
+                    } catch (error) {
+                        console.error(error);
+                    } finally {
+                        isSubmitting.value = false;
+                    }
+                };
+
+                const filteredItems = computed(() => {
+                    let result = items.value;
+                    
+                    // Filter down to only "My Reports" if that view is active
+                    if (currentView.value === 'my-reports') {
+                        result = result.filter(item => item.isMine);
+                    }
+
+                    if (activeFilter.value !== 'all') {
+                        result = result.filter(item => item.status === activeFilter.value);
+                    }
+                    if (searchQuery.value.trim() !== '') {
+                        const query = searchQuery.value.toLowerCase();
+                        result = result.filter(item => 
+                            item.title.toLowerCase().includes(query) || 
+                            item.description.toLowerCase().includes(query) ||
+                            item.location.toLowerCase().includes(query)
+                        );
+                    }
+                    return result;
+                });
+
+                const formatDate = (dateString) => {
+                    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                    return new Date(dateString).toLocaleDateString(undefined, options);
+                };
+
+                const logout = () => {
+                    localStorage.removeItem('token');
+                    window.location.href = '/index.html';
+                };
+
+                const deleteItem = (id) => {
+                    // Remove the item from the front-end list
+                    items.value = items.value.filter(item => item.id !== id);
+                    
+                    // BACKEND NOTE: When connected to Spring Boot, uncomment this:
+                    // fetch('/api/items/' + id, { method: 'DELETE' }); 
+                };
+
+                const myReportCount = computed(() => {
+                    // Automatically counts how many items belong to the logged-in user
+                    return items.value.filter(item => item.isMine).length;
+                });
+
+                const profileMessage = ref('');
+                
+                const updateProfile = async () => {
+                    profileMessage.value = 'Saving changes...';
+                    
+                    // Simulating a delay for backend connection
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    
+                    profileMessage.value = 'Profile updated successfully!';
+                    userProfile.newPassword = ''; // Clear password field for security
+                    
+                    setTimeout(() => { profileMessage.value = ''; }, 3000); // Clear success message after 3 seconds
+
+                    /* 
+                    // ==========================================
+                    // BACKEND INTEGRATION: Update Profile
+                    // ==========================================
+                    const token = localStorage.getItem('token');
+                    fetch('/api/users/profile', {
+                        method: 'PUT',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` 
+                        },
+                        body: JSON.stringify(userProfile)
+                    });
+                    */
+                };
+
+                return {
+                    currentView, searchQuery, activeFilter, filteredItems, formatDate, logout, deleteItem,
+                    showReportModal, reportForm, imageError, isSubmitting,
+                    handleImageUpload, closeModal, submitReport,
+                    userProfile, myReportCount, updateProfile, profileMessage
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
