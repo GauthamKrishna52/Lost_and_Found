@@ -26,7 +26,8 @@ public class Item {
     @Enumerated(EnumType.STRING)
     private ItemStatus status;
     
-    private String imageUrl;
+    @Column(name = "image", columnDefinition = "BYTEA")
+    private byte[] image;
 
     private LocalDateTime createdAt;
 
@@ -94,12 +95,12 @@ public class Item {
         this.status = status;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public byte[] getImage() {
+        return image;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setImage(byte[] image) {
+        this.image = image;
     }
 
     public LocalDateTime getCreatedAt() {

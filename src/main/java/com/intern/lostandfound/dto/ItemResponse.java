@@ -2,33 +2,29 @@ package com.intern.lostandfound.dto;
 
 import java.time.LocalDate;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import com.intern.lostandfound.model.ItemStatus;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+public class ItemResponse {
 
-public class ItemRequest {
-
-    @NotBlank
+    private Long id;
     private String itemName;
-
     private String description;
-
-    @NotBlank
     private String category;
-
-    @NotBlank
     private String location;
-
-    @NotNull
     private LocalDate lostDate;
-
-    @NotNull
     private ItemStatus status;
+    private String imageUrl;
 
-    private MultipartFile image;
+    public ItemResponse() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getItemName() {
         return itemName;
@@ -78,11 +74,11 @@ public class ItemRequest {
         this.status = status;
     }
 
-    public MultipartFile getImage() {
-        return image;
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    public void setImage(MultipartFile image) {
-        this.image = image;
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }
