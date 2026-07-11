@@ -3,7 +3,6 @@ package com.intern.lostandfound.controller;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import com.intern.lostandfound.dto.ItemRequest;
 import com.intern.lostandfound.service.ItemService;
 import java.util.List;
@@ -13,7 +12,6 @@ import com.intern.lostandfound.dto.ItemResponse;
 @RestController
 @RequestMapping("/api/items")
 public class ItemController {
-
     private final ItemService itemService;
 
     public ItemController(ItemService itemService) {
@@ -35,5 +33,16 @@ public class ItemController {
     @GetMapping("/{id}/image")
     public ResponseEntity<byte[]> getItemImage(@PathVariable Long id) {
     return itemService.getItemImage(id);
+    }
+    @PutMapping(value="/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String updateItem(
+        @PathVariable Long id,
+        @ModelAttribute ItemRequest request) {
+
+    return itemService.updateItem(id, request);
+    }
+    @DeleteMapping("/{id}")
+    public String deleteItem(@PathVariable Long id) {
+    return itemService.deleteItem(id);
     }
 }

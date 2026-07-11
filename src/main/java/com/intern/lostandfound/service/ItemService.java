@@ -94,5 +94,38 @@ public class ItemService {
     return ResponseEntity.ok()
             .contentType(MediaType.IMAGE_PNG)
             .body(item.getImage());
-}
+    }
+    public String updateItem(Long id, ItemRequest request) {
+
+    Item item = itemRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Item not found"));
+
+    item.setItemName(request.getItemName());
+    item.setDescription(request.getDescription());
+    item.setCategory(request.getCategory());
+    item.setLocation(request.getLocation());
+    item.setLostDate(request.getLostDate());
+    item.setStatus(request.getStatus());
+
+    try {
+        if (request.getImage() != null && !request.getImage().isEmpty()) {
+            item.setImage(request.getImage().getBytes());
+        }
+    } catch (Exception e) {
+        throw new RuntimeException("Error updating image", e);
+    }
+
+    itemRepo.save(item);
+
+    return "Item Updated Successfully";
+    }
+    
+    public String deleteItem(Long id) {
+    Item item = itemRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Item not found"));
+
+    itemRepo.delete(item);
+
+    return "Item Deleted Successfully";
+    }
 }
