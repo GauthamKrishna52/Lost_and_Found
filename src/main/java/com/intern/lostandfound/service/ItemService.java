@@ -2,25 +2,36 @@ package com.intern.lostandfound.service;
 
 import org.springframework.stereotype.Service;
 import java.io.IOException;
-import com.intern.lostandfound.dto.ItemRequest;
-import com.intern.lostandfound.model.Item;
-import com.intern.lostandfound.repo.ItemRepo;
+import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+
+import com.intern.lostandfound.dto.ItemRequest;
 import com.intern.lostandfound.dto.ItemResponse;
+import com.intern.lostandfound.model.Item;
+import com.intern.lostandfound.model.User;
+import com.intern.lostandfound.repo.ItemRepo;
+import com.intern.lostandfound.repo.Userrepo;
 
 @Service
 public class ItemService {
 
     private final ItemRepo itemRepo;
+    private final Userrepo userRepo;
 
-    public ItemService(ItemRepo itemRepo) {
+    public ItemService(ItemRepo itemRepo, Userrepo userRepo) {
         this.itemRepo = itemRepo;
+        this.userRepo = userRepo;
     }
 
     public String addItem(ItemRequest request) {
+        return addItem(request, null);
+    }
+
+    public String addItem(ItemRequest request, Principal principal) {
 
         Item item = new Item();
 
@@ -30,6 +41,24 @@ public class ItemService {
         item.setLocation(request.getLocation());
         item.setLostDate(request.getLostDate());
         item.setStatus(request.getStatus());
+
+        String username = null;
+        if (principal != null) {
+            username = principal.getName();
+        }
+
+        if (username != null && !username.isBlank()) {
+            item.setPostedByUsername(username);
+            User currentUser = userRepo.findByEmail(username);
+            if (currentUser != null) {
+                item.setPostedByName(currentUser.getName());
+                item.setPostedByEmail(currentUser.getEmail());
+                item.setPostedByPhoneNumber(currentUser.getPhoneNumber());
+            } else {
+                item.setPostedByEmail(username);
+            }
+        }
+
         try {
         if (request.getImage() != null && !request.getImage().isEmpty()) {
             item.setImage(request.getImage().getBytes());
@@ -58,6 +87,10 @@ public class ItemService {
         response.setLocation(item.getLocation());
         response.setLostDate(item.getLostDate());
         response.setStatus(item.getStatus());
+        response.setPostedByUsername(item.getPostedByUsername());
+        response.setPostedByName(item.getPostedByName());
+        response.setPostedByEmail(item.getPostedByEmail());
+        response.setPostedByPhoneNumber(item.getPostedByPhoneNumber());
 
         response.setImageUrl("/api/items/" + item.getId() + "/image");
 
@@ -80,6 +113,10 @@ public class ItemService {
     response.setLocation(item.getLocation());
     response.setLostDate(item.getLostDate());
     response.setStatus(item.getStatus());
+    response.setPostedByUsername(item.getPostedByUsername());
+    response.setPostedByName(item.getPostedByName());
+    response.setPostedByEmail(item.getPostedByEmail());
+    response.setPostedByPhoneNumber(item.getPostedByPhoneNumber());
 
     response.setImageUrl("/api/items/" + item.getId() + "/image");
 

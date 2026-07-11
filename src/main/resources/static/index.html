@@ -211,12 +211,31 @@
                             body: JSON.stringify(loginForm)
                         });
                         
-                        const data = await response.text();
-                        
-                        if (!response.ok) throw new Error(data.message || 'Login failed');
-                        
+                        const responseText = await response.text();
+                        let token = '';
+
+                        try {
+                            const parsed = JSON.parse(responseText);
+                            token = parsed.token || parsed;
+                        } catch (error) {
+                            token = responseText;
+                        }
+
+                        if (!response.ok) {
+                            let errorMessage = 'Login failed';
+                            try {
+                                const parsedError = JSON.parse(responseText);
+                                errorMessage = parsedError.message || errorMessage;
+                            } catch (error) {
+                                errorMessage = responseText || errorMessage;
+                            }
+                            throw new Error(errorMessage);
+                        }
+
+                        if (!token) throw new Error('Login failed');
+
                         // Handle success (e.g., save token, redirect to dashboard)
-                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('token', token);
                         window.location.href = '/dashboard.html';
                         
 
