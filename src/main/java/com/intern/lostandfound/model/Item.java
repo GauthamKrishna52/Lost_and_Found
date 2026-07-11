@@ -29,6 +29,14 @@ public class Item {
     @Column(name = "image", columnDefinition = "BYTEA")
     private byte[] image;
 
+    private String postedByUsername;
+
+    private String postedByName;
+
+    private String postedByEmail;
+
+    private String postedByPhoneNumber;
+
     private LocalDateTime createdAt;
 
     public Item() {
@@ -101,6 +109,38 @@ public class Item {
 
     public void setImage(byte[] image) {
         this.image = image;
+    }
+
+    public String getPostedByUsername() {
+        return postedByUsername;
+    }
+
+    public void setPostedByUsername(String postedByUsername) {
+        this.postedByUsername = postedByUsername;
+    }
+
+    public String getPostedByName() {
+        return postedByName;
+    }
+
+    public void setPostedByName(String postedByName) {
+        this.postedByName = postedByName;
+    }
+
+    public String getPostedByEmail() {
+        return postedByEmail;
+    }
+
+    public void setPostedByEmail(String postedByEmail) {
+        this.postedByEmail = postedByEmail;
+    }
+
+    public String getPostedByPhoneNumber() {
+        return postedByPhoneNumber;
+    }
+
+    public void setPostedByPhoneNumber(String postedByPhoneNumber) {
+        this.postedByPhoneNumber = postedByPhoneNumber;
     }
 
     public LocalDateTime getCreatedAt() {

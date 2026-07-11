@@ -14,6 +14,10 @@ public class ItemResponse {
     private LocalDate lostDate;
     private ItemStatus status;
     private String imageUrl;
+    private String postedByUsername;
+    private String postedByName;
+    private String postedByEmail;
+    private String postedByPhoneNumber;
 
     public ItemResponse() {
     }
@@ -80,5 +84,37 @@ public class ItemResponse {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getPostedByUsername() {
+        return postedByUsername;
+    }
+
+    public void setPostedByUsername(String postedByUsername) {
+        this.postedByUsername = postedByUsername;
+    }
+
+    public String getPostedByName() {
+        return postedByName;
+    }
+
+    public void setPostedByName(String postedByName) {
+        this.postedByName = postedByName;
+    }
+
+    public String getPostedByEmail() {
+        return postedByEmail;
+    }
+
+    public void setPostedByEmail(String postedByEmail) {
+        this.postedByEmail = postedByEmail;
+    }
+
+    public String getPostedByPhoneNumber() {
+        return postedByPhoneNumber;
+    }
+
+    public void setPostedByPhoneNumber(String postedByPhoneNumber) {
+        this.postedByPhoneNumber = postedByPhoneNumber;
     }
 }
